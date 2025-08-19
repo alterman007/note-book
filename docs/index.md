@@ -10,11 +10,11 @@ hero:
     src: /home-bg.png
     alt: 背景图
   actions:
-    - theme: brand111
-      text: Markdown Examples
+    - theme: brand
+      text: Markdown Examples11
       link: /markdown-examples
-    - theme: alt111
-      text: API Examples
+    - theme: alt
+      text: API Examples11
       link: /api-examples
 
 features:
