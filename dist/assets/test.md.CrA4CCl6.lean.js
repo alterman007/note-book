@@ -1,0 +1,1 @@
+import{_ as e,c as t,o as i,ae as s}from"./chunks/framework.U1Gow_7P.js";const b=JSON.parse('{"title":"bab","description":"","frontmatter":{},"headers":[],"relativePath":"test.md","filePath":"test.md"}'),l={name:"test.md"};function r(h,a,d,n,o,c){return i(),t("div",null,a[0]||(a[0]=[s("",10)]))}const f=e(l,[["render",r]]);export{b as __pageData,f as default};

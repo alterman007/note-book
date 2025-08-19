@@ -1,9 +1,10 @@
 {
   "scripts": {
     "start": "npm run docs:dev",
-    "docs:dev": "vitepress dev docs --host",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "build": "npm run docs:build",
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
   },
   "devDependencies": {
     "vitepress": "^1.6.4"

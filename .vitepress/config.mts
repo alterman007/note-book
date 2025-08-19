@@ -2,6 +2,9 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  cleanUrls: true, // 清理URL中的.html后缀
+  srcDir: 'docs',
+  outDir: 'dist',
   head: [
     ['link', { rel: 'icon', href: '/notebook.png' }],
   ],
@@ -49,4 +52,9 @@ export default defineConfig({
       copyright: 'Copyright © 2025-present bab',
     },
   },
+  vite: {
+    server: {
+      host: true,
+    }
+  }
 })
