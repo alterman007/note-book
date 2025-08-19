@@ -38,7 +38,7 @@ export default defineConfig({
       ],
       'frontend': [
         {
-          text: 'Vue',
+          text: 'Vu1111e',
           items: [
             { text: 'Vue3', link: '/frontend/vue' },
           ]
