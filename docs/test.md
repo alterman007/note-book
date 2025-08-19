@@ -17,3 +17,10 @@ fdaf121221
 ```jsx
 const a = 1
 ```
+
+
+<script setup>
+  const data = 1;
+</script>
+
+{{ data }}
