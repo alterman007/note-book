@@ -11,7 +11,7 @@ hero:
     alt: 背景图
   actions:
     - theme: brand
-      text: Markdown Examples11
+      text: Markdown Examples
       link: /markdown-examples
     - theme: alt
       text: API Examples11ee
