@@ -23,4 +23,4 @@ const a = 1
   const data = 1;
 </script>
 
-{{ data }} 122121
+{{ data }} 12
