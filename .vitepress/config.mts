@@ -1,60 +1,68 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   cleanUrls: true, // 清理URL中的.html后缀
-  srcDir: 'docs',
-  outDir: 'dist',
-  head: [
-    ['link', { rel: 'icon', href: '/notebook.png' }],
-  ],
+  srcDir: "docs",
+  outDir: "dist",
+  head: [["link", { rel: "icon", href: "/notebook.png" }]],
   title: "编程笔记-title",
   description: "编程笔记-description",
   themeConfig: {
-    logo: '/notebook.png',
+    logo: "/notebook.png",
     // https://vitepress.dev/reference/default-theme-config
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' },
+      { text: "Home", link: "/" },
+      { text: "Examples", link: "/markdown-examples" },
       {
-        text: 'Test',
+        text: "前端",
         items: [
-          { text: 'Test1', link: '/test' },
-          { text: 'Test2', link: '/frontend/vue' },
-        ]
+          { text: "Test1", link: "/test" },
+          { text: "vue", link: "/frontend/vue" },
+          { text: "typescript", link: "/frontend/typescript" },
+        ],
       },
     ],
 
     sidebar: {
-      'abcdefg': [
+      test: [
         {
-          text: 'Examples',
+          text: "Examples",
           items: [
-            { text: 'Markdown Examples', link: '/markdown-examples' },
-            { text: 'Runtime API Examples', link: '/api-examples' },
-            { text: 'Test', link: '/test' },
-          ]
-        }
+            { text: "Markdown Examples", link: "/markdown-examples" },
+            { text: "Runtime API Examples", link: "/api-examples" },
+            { text: "Test", link: "/test" },
+          ],
+        },
       ],
-      'frontend': [
+      "/frontend/vue": [
         {
-          text: 'Vu1111e',
-          items: [
-            { text: 'Vue3', link: '/frontend/vue' },
-          ]
-        }
+          text: "Vu1111e",
+          collapsed: false,
+          items: [{ text: "Vue3", link: "/frontend/vue" }],
+        },
+      ],
+      "/frontend/typescript": [
+        {
+          text: "Typescript",
+          collapsed: false,
+          items: [{ text: "Typescript", link: "/frontend/typescript" }],
+        },
       ],
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+      { icon: "github", link: "https://github.com/vuejs/vitepress" },
     ],
-    footer: {
-      copyright: 'Copyright © 2025-present bab',
+    editLink: {
+      pattern: "https://github.com/alterman007/note-book/tree/main/docs/:path",
     },
+    // footer: {
+    //   copyright: 'Copyright © 2025-present bab',
+    // },
   },
   vite: {
     server: {
       host: true,
-    }
-  }
-})
+    },
+  },
+});
