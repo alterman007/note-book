@@ -1,3 +1,3 @@
-export function resolve(path: string, base: string) {
-  return new URL(path, base).href;
+export function resolve(path: string) {
+  return new URL(path, location.href).href;
 }

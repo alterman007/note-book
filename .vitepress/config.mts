@@ -61,6 +61,11 @@ export default defineConfig({
     // },
   },
   vite: {
+    resolve: {
+      alias: {
+        "@": process.cwd(),
+      },
+    },
     server: {
       host: true,
     },
