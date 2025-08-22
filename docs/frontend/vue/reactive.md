@@ -103,12 +103,13 @@ import refSrc from './ref.jpg'
 reactive 的实现是基于proxy的，而proxy的第一个参数只能是对象，以及其拦截的是操作对象的行为（属性查找、赋值、枚举、函数调用），对于变量的修改是无法进行拦截的，以此如果想要实现数据的整体替换，尤其是字符串、数值、布尔值的修改，必须添加额外的一层包裹
 :::
 
-::: info [为什么推荐使用 ref 而不是reactive](https://cn.vuejs.org/guide/reusability/composables#return-values)
+::: info [为什么推荐使用 ref 而不是reactive ?](https://cn.vuejs.org/guide/reusability/composables#return-values)
 网上传言，官方推荐使用ref，而不是reactive，个人认为，这个描述并不准确，
-1. 官方推荐的是 在 开发 组合式API的情况下使用ref ，优势是可以保证解构之后的响应性，
-2. 确实，在基本类型（string，number，boolean、Map，Set）下，以及获取组件实实例情况下必须使用ref/shallowRef `<h1 ref="domRef" />`
 
-但并不说明，我们就应该更多的使用ref，在了解响应性原理下，避免可以预见的bug情况下，选择更合适的api才是程序员该做出的选择。
+1. 官方推荐的是 在 开发 组合式API的情况下使用ref ，优势是可以保证解构之后的响应性，
+2. 确实，在基本类型（string，number，boolean、Map，Set）下，以及获取组件实实例或者dom元素的情况下必须使用ref/shallowRef `<h1 ref="domRef" />`
+
+但并不说明，我们就应该更多的使用ref，事实上，`ref(value)` 与 `reactive({ value })` 两者并无本质区别，在了解响应性原理下，避免可以预见的bug情况下，选择更合适的api才是程序员该做出的选择。
 :::
 ref实现的关键是，使用RefImpl 对数据进行包裹，通过对`value`访问器属性 的get，set操作，实现副作用的依赖收集和触发操作
 
@@ -143,4 +144,64 @@ ref实现的关键是，使用RefImpl 对数据进行包裹，通过对`value`�
     obj.value.name = 'alterman';
   }, 1000);
 </script>
+```
+
+## computed 的实现
+
+要实现computed，我们给 ReactiveEffect 添加了第二参数 scheduler (调度器)。
+
+but why？
+
+1. 在依赖收集阶段。对比reactive、ref ，属性修改即触发副作用。但是computed 不是，computed的 value 访问器get函数，只有当计算属性的结果被使用的时候，才会执行，与此同时才会收集依赖。并且在自身 `effect.run` 的过程中进一步触发内部响应属性依赖的收集
+2. computed的 setter 本身不是用来触发 副作用执行的，只是普通的函数调用。
+3. 如果 getter 内部依赖的响应数据发生改变时，computed 并不是直接触发getter 的执行，而是仅仅是标记 `_dirty` 为true，并进一步触发 value 访问器 get 函数执行过程中收集的副作用，当这些副作用通过computed.value 获取数据时，才会真正重新执行getter
+4. 因此实现computed，我们给 ReactiveEffect 添加调度器，调度器只触发副作用，至于getter函数是否执行，则取决于副作用的执行过程中，是否用到了 computed.value
+
+为便于理解，以下先 给出computed 收集完依赖后，但是副作用的执行，并不会导致getter触发的调用示例
+
+```html
+<h1 id="app"></h1>
+<script type="module">
+  import {
+    computed,
+    reactive,
+    effect,
+  } from 'https://cdn.bootcdn.net/ajax/libs/vue/3.2.37/vue.esm-browser.js';
+
+  const person = reactive({
+    name: 'world',
+    age: 18,
+  });
+  const greet = computed(function greetGetter() {
+    // computed 内部 person 的依赖收集
+    console.log('执行 computed getter');
+    return `hello ${person.name}`;
+  });
+  let count = 0;
+  effect(function print() {
+    console.log('print 函数执行');
+    if (count === 0) {
+      // 这里会触发 computed 的依赖收集
+      document.getElementById('app').innerHTML = greet.value;
+      count++;
+      return;
+    }
+    //
+  });
+  setTimeout(() => {
+    // 这里的修改，会触发 上面 print 函数的执行。
+    // 过程是，set person.name 触发 computed 调度器的执行，
+    // 调度器内部会触发 print 的依赖收集，
+    // 但是print函数内部由于没有执行 greet.value, 因此不会导致 greetGetter 的执行
+    person.name = 'alterman';
+  }, 1000);
+</script>
+```
+
+```txt
+最终的打印结果是：
+print 函数执行
+执行 computed getter
+print 函数执行
+执行 computed getter ❌ 这一行不会打印
 ```
