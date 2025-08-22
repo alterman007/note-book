@@ -67,13 +67,21 @@ console.log(total);
 
 ## reactive、effect 的实现
 
+reactive 的实现关键是在代理对象的get、set操作中，在get中收集副作用对象，在后面的set中触发副作用对象。
+这里的副作用对象，记录了effect函数传入的函数
+
+具体过程如下
+
 <ElImage :src="reactiveSrc" :previewSrcList="[reactiveSrc]" />
 
 <script setup>
 import reactiveSrc from './reactive.jpg'
+import refSrc from './ref.jpg'
+
 </script>
 
 ```html
+<h1 id="app"></h1>
 <script type="module">
   import { reactive, effect } from '../dist/vue.esm.js';
   const proxyObj = reactive({
@@ -90,3 +98,49 @@ import reactiveSrc from './reactive.jpg'
 ```
 
 ## ref 的实现
+
+::: info 为什么需要ref
+reactive 的实现是基于proxy的，而proxy的第一个参数只能是对象，以及其拦截的是操作对象的行为（属性查找、赋值、枚举、函数调用），对于变量的修改是无法进行拦截的，以此如果想要实现数据的整体替换，尤其是字符串、数值、布尔值的修改，必须添加额外的一层包裹
+:::
+
+::: info [为什么推荐使用 ref 而不是reactive](https://cn.vuejs.org/guide/reusability/composables#return-values)
+网上传言，官方推荐使用ref，而不是reactive，个人认为，这个描述并不准确，
+1. 官方推荐的是 在 开发 组合式API的情况下使用ref ，优势是可以保证解构之后的响应性，
+2. 确实，在基本类型（string，number，boolean、Map，Set）下，以及获取组件实实例情况下必须使用ref/shallowRef `<h1 ref="domRef" />`
+
+但并不说明，我们就应该更多的使用ref，在了解响应性原理下，避免可以预见的bug情况下，选择更合适的api才是程序员该做出的选择。
+:::
+ref实现的关键是，使用RefImpl 对数据进行包裹，通过对`value`访问器属性 的get，set操作，实现副作用的依赖收集和触发操作
+
+具体过程如下
+
+<!-- 1. 创建RefImpl对象
+2. 记录数据时，如果数据时对象，使用reactive包裹，保证内部数据的响应性
+3. getter 过程收集依赖
+4. setter 过程判断值变化手触发依赖 -->
+
+<ElImage :src="refSrc" :previewSrcList="[refSrc]" />
+
+```html
+<h1 id="app1"></h1>
+<h1 id="app2"></h1>
+<script type="module">
+  import { ref, effect } from '../dist/vue.esm.js';
+  const name = ref('world');
+  const obj = ref({
+    name: 'world',
+    age: 18,
+  });
+  effect(() => {
+    document.getElementById('app1').innerHTML = name.value;
+  });
+  effect(() => {
+    document.getElementById('app2').innerHTML = obj.value.name;
+  });
+
+  setTimeout(() => {
+    name.value = 'alterman';
+    obj.value.name = 'alterman';
+  }, 1000);
+</script>
+```

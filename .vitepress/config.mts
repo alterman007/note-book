@@ -21,7 +21,6 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' },
       {
         text: '前端',
         items: [
@@ -32,16 +31,6 @@ export default defineConfig({
     ],
 
     sidebar: {
-      test: [
-        {
-          text: 'Examples',
-          items: [
-            { text: 'Markdown Examples', link: '/markdown-examples' },
-            { text: 'Runtime API Examples', link: '/api-examples' },
-            { text: 'Test', link: '/test' },
-          ],
-        },
-      ],
       '/frontend/vue': [
         {
           text: '源码分析',
