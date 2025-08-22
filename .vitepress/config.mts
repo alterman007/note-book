@@ -1,4 +1,12 @@
+import { fileURLToPath, URL } from 'node:url';
+import path from 'node:path';
 import { defineConfig } from 'vitepress';
+
+import AutoImport from 'unplugin-auto-import/vite';
+import Components from 'unplugin-vue-components/vite';
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
+
+const rootDir = fileURLToPath(new URL('..', import.meta.url));
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -62,10 +70,28 @@ export default defineConfig({
     // },
   },
   vite: {
+    plugins: [
+      AutoImport({
+        // imports: ['vue', 'vue-router'],
+        // vueTemplate: true,
+        include: [/\.([tj]sx?|vue)$/, /\.vue\?vue/, /\.md$/],
+        resolvers: [ElementPlusResolver()],
+        dts: path.resolve(rootDir, '.vitepress/auto-imports.d.ts'),
+      }),
+      Components({
+        resolvers: [ElementPlusResolver()],
+        include: [/\.vue$/, /\.vue\?vue/, /\.md$/],
+        dts: path.resolve(rootDir, '.vitepress/components.d.ts'),
+      }),
+    ],
     resolve: {
       alias: {
-        '@': process.cwd(),
+        '@': rootDir,
       },
+    },
+    // Ensure Element Plus runs under VitePress SSR
+    ssr: {
+      noExternal: ['element-plus'],
     },
     server: {
       host: true,

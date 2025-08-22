@@ -67,10 +67,10 @@ console.log(total);
 
 ## reactive、effect 的实现
 
-<ElImage src="./reactive.jpg" previewSrcList="srcList" />
+<ElImage :src="reactiveSrc" :previewSrcList="[reactiveSrc]" />
 
 <script setup>
-import { ElImage } from 'element-plus';
+import reactiveSrc from './reactive.jpg'
 </script>
 
 ```html
