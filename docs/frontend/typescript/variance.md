@@ -188,7 +188,7 @@ const admins: Admin[] = [
 ];
 ```
 
-admins.filter(...) 接受哪些类型的回调？ 显然，它接受一个带有 Admin 类型参数的回调：
+`admins.filter(...)` 接受哪些类型的回调？ 显然，它接受一个带有 Admin 类型参数的回调：
 
 ```ts
 const superAdmins = admins.filter((admin: Admin): boolean => {
@@ -198,7 +198,7 @@ const superAdmins = admins.filter((admin: Admin): boolean => {
 console.log(superAdmins); // [ Admin('jane.doe', true) ]
 ```
 
-但是 admins.filter(...) 会接受参数类型为 User 的回调吗？
+但是 `admins.filter(...)` 会接受参数类型为 User 的回调吗？
 
 ```ts
 const jokers = admins.filter((user: User): boolean => {
@@ -208,9 +208,9 @@ const jokers = admins.filter((user: User): boolean => {
 console.log(jokers); // [ Admin('joker', false) ]
 ```
 
-admins.filter() 接受 (admin: Admin) => boolean 基类型，也接受其子类型，如 (user: User) => boolean。
+`admins.filter()` 接受 `(admin: Admin) => boolean` 基类型，也接受其子类型，如 `(user: User) => boolean`。
 
-如果高阶函数接受特定类型的回调，例如 (admin: Admin) => boolean，那么您还可以提供特定类型的子类型的回调，例如 (user: User) => boolean。
+如果高阶函数接受特定类型的回调，例如 `(admin: Admin) => boolean`，那么您还可以提供特定类型的子类型的回调，例如 `(user: User) => boolean`。
 
 ## 结论
 

@@ -17,8 +17,7 @@ export default defineConfig({
       {
         text: '前端',
         items: [
-          { text: 'Test1', link: '/test' },
-          { text: 'vue', link: '/frontend/vue' },
+          { text: 'vue', link: '/frontend/vue/' },
           { text: 'typescript', link: '/frontend/typescript/' },
         ],
       },
@@ -37,9 +36,9 @@ export default defineConfig({
       ],
       '/frontend/vue': [
         {
-          text: 'Vu1111e',
+          text: '源码分析',
           // collapsed: false,
-          items: [{ text: 'Vue3', link: '/frontend/vue' }],
+          items: [{ text: '响应式', link: '/frontend/vue/reactive' }],
         },
       ],
       '/frontend/typescript': [
@@ -52,7 +51,9 @@ export default defineConfig({
         },
       ],
     },
-    socialLinks: [{ icon: 'github', link: 'https://github.com/vuejs/vitepress' }],
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/vuejs/vitepress' },
+    ],
     editLink: {
       pattern: 'https://github.com/alterman007/note-book/tree/main/docs/:path',
     },

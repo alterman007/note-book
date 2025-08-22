@@ -10,5 +10,8 @@
     "@types/node": "^24.3.0",
     "prettier": "^3.6.2",
     "vitepress": "^1.6.4"
+  },
+  "dependencies": {
+    "element-plus": "^2.10.7"
   }
 }
