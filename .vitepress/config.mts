@@ -28,6 +28,18 @@ export default defineConfig({
           { text: 'typescript', link: '/frontend/typescript/' },
         ],
       },
+      {
+        text: '后端',
+        items: [
+          // { text: 'nodejs', link: '/backend/nodejs/' },
+        ],
+      },
+      {
+        text: '杂谈',
+        items: [
+          { text: '系统', link: '/program/operator/' },
+        ],
+      },
     ],
 
     sidebar: {
@@ -45,6 +57,12 @@ export default defineConfig({
             { text: 'Typescript', link: '/frontend/typescript/' },
             { text: 'variance', link: '/frontend/typescript/variance' },
           ],
+        },
+      ],
+      '/program/operator': [
+        {
+          text: '系统',
+          items: [{ text: '协程', link: '/program/operator/corouine' }],
         },
       ],
     },
