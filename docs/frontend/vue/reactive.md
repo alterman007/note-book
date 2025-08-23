@@ -1,5 +1,6 @@
 ---
 sideNavTitle: 响应式模块实现
+outline: [2, 3]
 ---
 
 # vue的响应式设计
@@ -87,9 +88,10 @@ reactive 的实现比较简单，配合 effect 函数内部创建副作用对象
 <ElImage :src="reactiveSrc" :previewSrcList="[reactiveSrc]" />
 <script setup>
 import CodeVar from '@/components/CodeVar.vue';
-import reactiveSrc from './reactive.jpg'
-import refSrc from './ref.jpg'
-import computedSrc from './computed.jpg'
+import reactiveSrc from './imgs/reactive.jpg'
+import refSrc from './imgs/ref.jpg'
+import computedSrc from './imgs/computed.jpg'
+import watchSrc from './imgs/watch.jpg'
 </script>
 
 ```html
@@ -121,7 +123,7 @@ reactive 的实现是基于proxy的，而proxy的第一个参数只能是对象�
 1. 官方推荐的是 在 开发 组合式API的情况下使用ref ，优势是可以保证解构之后的响应性，
 2. 确实，在基本类型（string，number，boolean、Map，Set）下，以及获取组件实实例或者dom元素的情况下必须使用ref/shallowRef `<h1 ref="domRef" />`
 
-但并不说明，我们就应该更多的使用ref，事实上，`ref(value)` 与 `reactive({ value })` 两者并无本质区别，在了解响应性原理下，避免可以预见的bug情况下，选择更合适的api才是程序员该做出的选择。
+但并不说明，我们就应该更多的使用ref，事实上，`ref(value)` 与 `reactive({ value })` 两者并无本质区别，在了解响应性原理，避免可以预见的bug情况下，选择更合适的api才是程序员该做出的选择。
 :::
 ref实现的关键是，使用RefImpl 对数据进行包裹，通过对`value`访问器属性 的get，set操作，实现副作用的依赖收集和触发操作
 
@@ -160,14 +162,15 @@ ref实现的关键是，使用RefImpl 对数据进行包裹，通过对`value`�
 
 ## computed 的实现
 
-要实现computed，我们给 ReactiveEffect 添加了第二参数 scheduler (调度器)。
+要实现computed，我们给 `ReactiveEffect` 添加了第二参数 scheduler (调度器)。
 
 but why？
 
 1. 在依赖收集阶段。对比reactive、ref ，属性修改即触发副作用。但是computed 不是，computed的 value 访问器get函数，只有当计算属性的结果被使用的时候，才会执行，与此同时才会收集依赖。并且在自身 `effect.run` 的过程中进一步触发内部响应属性依赖的收集
 2. computed的 setter 本身不是用来触发 副作用执行的，只是普通的函数调用。
 3. 如果 getter 内部依赖的响应数据发生改变时，computed 并不是直接触发getter 的执行，而是仅仅是标记 `_dirty` 为true，并进一步触发 value 访问器 get 函数执行过程中收集的副作用，当这些副作用通过computed.value 获取数据时，才会真正重新执行getter
-4. 因此实现computed，我们给 ReactiveEffect 添加调度器，调度器只触发副作用，至于getter函数是否执行，则取决于副作用的执行过程中，是否用到了 computed.value
+4. 因此实现computed，我们给 `ReactiveEffect` 添加调度器，调度器只触发副作用，至于getter函数是否执行，则取决于副作用的执行过程中，是否用到了 computed.value
+5. 作为对比，`ReactiveEffect`实例对象的第一个函数参数始终用于依赖收集，当没有 `scheduler`的时候，依赖触发会导致第一个函数参数的执行，有`scheduler`的时候，执行调度器，给用户自定义副作用的行为方式
 
 为便于理解，以下先 给出官方源码 computed 收集完依赖后，但是副作用的执行，并不会导致getter触发的调用示例
 
@@ -253,7 +256,7 @@ debug 源码发现，新版本中的 副作用执行策略有变，会固定的�
 
 ### computed 执行流程分析
 
-computed的源码虽然简短，但是其执行流程相比reactive 的副作用收集、触发复杂很多，因此有必要围绕 `ReactiveEffect` 实例的创建、收集、触发 描述下其执行流程：
+computed的源码虽然简短，但是其执行流程相比reactive 的副作用收集、触发过程复杂很多，因此有必要围绕 `ReactiveEffect` 实例的创建、收集、触发 描述下其执行流程：
 
 1. `const person = reactive({ name: 'world' });` 只是创建一个代理对象
 2. `const greet = computed(function greetGetter() {...}` 创建 `ComputedRefImpl`实例，标记为 `computedRef`，内部创建了第一个 `ReactiveEffect` 实例标记为 <CodeVar>computedEffect</CodeVar>
@@ -272,3 +275,12 @@ computed的源码虽然简短，但是其执行流程相比reactive 的副作用
 
 因为<CodeVar>baseEffect</CodeVar>会触发`computedRef`的 `value getter`的执行，<CodeVar>computedEffect</CodeVar> 会触发调度器的执行， `value getter` 将 \_dirty 属性先修改为false，调度器将 \_dirty 属性先修改为true，最终导致死循环
 :::
+
+## watch 的实现
+
+watch 函数的响应性是基于`reactive`, `ref`, `computed`, `ReactiveEffect` 前面的 api 实现的，watch的职责 是调度，控制 第二个参数 `callback` 的执行时机.
+
+要实现 watch，对比 `ReactiveEffect` 的调度器是用于自定义触发副作用的处理函数, runtime-core 包中 scheduler.ts 文件的功能，这里的调度用于异步执行回调函数，通过 `Promise.reslove().then(cb)` 将回调任务放到微队列中执行。
+
+watch 函数内部的 getter 包装source，实现副作用的收集，scheduler 变量 包装cb， 用于控制cb的执行时机。
+<ElImage :src="watchSrc" :previewSrcList="[watchSrc]" />
