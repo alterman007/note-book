@@ -3,7 +3,7 @@ sideNavTitle: 响应式模块实现
 outline: [2, 3]
 ---
 
-# vue的响应式设计
+# 响应式原理分析
 
 ## 浏览器api功能对比
 

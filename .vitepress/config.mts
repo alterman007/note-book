@@ -36,18 +36,20 @@ export default defineConfig({
       },
       {
         text: '杂谈',
-        items: [
-          { text: '系统', link: '/program/operator/' },
-        ],
+        items: [{ text: '系统', link: '/program/operator/' }],
       },
     ],
 
     sidebar: {
       '/frontend/vue': [
         {
-          text: '源码分析',
+          text: 'vue源码分析',
           // collapsed: false,
-          items: [{ text: '响应式', link: '/frontend/vue/reactive' }],
+          items: [
+            { text: '响应式原理', link: '/frontend/vue/reactive' },
+            { text: '运行时原理', link: '/frontend/vue/runtime' },
+            { text: '编译过程', link: '/frontend/vue/compiler' },
+          ],
         },
       ],
       '/frontend/typescript': [
