@@ -2,7 +2,13 @@
 sideNavTitle: 响应式模块实现
 outline: [2, 3]
 ---
-
+<script setup>
+import CodeVar from '@/components/CodeVar.vue';
+import reactiveSrc from './imgs/reactive.jpg'
+import refSrc from './imgs/ref.jpg'
+import computedSrc from './imgs/computed.jpg'
+import watchSrc from './imgs/watch.jpg'
+</script>
 # 响应式原理分析
 
 ## 浏览器api功能对比
@@ -80,19 +86,12 @@ reactive 的实现比较简单，配合 effect 函数内部创建副作用对象
 这里要说明，vue响应式的设计 只能支持函数同步执行过程中的依赖收集，原因是依赖收集是发生在 getter 函数的执行过程中，并且收集的副作用对象由activeEffect 变量保持，而 getter 函数是同步的，这俩者决定了vue 所有的依赖收集只能同步。
 
 ::: info javascript的限制
-这个问题的本质是 javascript 语言本身的限制，javacript 的执行是单线程的，其并发执行依赖于事件循环，事件循环配合 async 语法糖 本质是[协程](/program/operator/coroutine)（一种用户级线程），但是js的所有权威文档都没有协程的概念（包括 [mdn](https://developer.mozilla.org/zh-CN)，[ecma spec](https://tc39.es/ecma262/), [google](https://web.dev/?hl=zh-cn) ），js 执行上下文的切换完全不受用户控制，也没有提供协程上下文变量的概念。这些设计大幅简化了 程序员在 并发编程下的心智负担，但也限制了 vue的响应性设计中 对异步代码的执行过程中的依赖收集。
+这个问题的本质是 javascript 语言本身的限制，javacript 的执行是单线程的，其并发执行依赖于事件循环，事件循环配合 生成器/async 语法糖 本质是[协程](/program/operator/coroutine)（一种用户级线程，尽管js的所有权威文档都没有协程的概念，包括 [mdn](https://developer.mozilla.org/zh-CN)，[ecma spec](https://tc39.es/ecma262/)，[google](https://web.dev/?hl=zh-cn)，[nodejs](https://nodejs.org/zh-cn) ），js 用户对执行上下文的切换控制有限，也没有提供协程上下文变量的概念。这些设计大幅简化了程序员在并发编程下的心智负担，但也限制了 vue的响应性设计中 对异步代码的执行过程中的依赖收集。
 :::
 
 具体源码如下
 
 <ElImage :src="reactiveSrc" :previewSrcList="[reactiveSrc]" />
-<script setup>
-import CodeVar from '@/components/CodeVar.vue';
-import reactiveSrc from './imgs/reactive.jpg'
-import refSrc from './imgs/ref.jpg'
-import computedSrc from './imgs/computed.jpg'
-import watchSrc from './imgs/watch.jpg'
-</script>
 
 ```html
 <h1 id="app"></h1>
@@ -261,13 +260,13 @@ computed的源码虽然简短，但是其执行流程相比reactive 的副作用
 1. `const person = reactive({ name: 'world' });` 只是创建一个代理对象
 2. `const greet = computed(function greetGetter() {...}` 创建 `ComputedRefImpl`实例，标记为 `computedRef`，内部创建了第一个 `ReactiveEffect` 实例标记为 <CodeVar>computedEffect</CodeVar>
 3. `effect(function print() {...})` 开始变得复杂
-   - effect 内部创建第二个 `ReactiveEffect` 实例，标记为 <CodeVar>baseEffect</CodeVar>，其内部的 run 函数 将 activeEffect 设置为 <CodeVar>baseEffect1</CodeVar>，然后开始执行 print 函数
+   - effect 内部创建第二个 `ReactiveEffect` 实例，标记为 <CodeVar>baseEffect</CodeVar>，其内部的 run 函数 将 activeEffect 设置为 <CodeVar>baseEffect</CodeVar>，然后开始执行 print 函数
    - print函数内部取得 greet.value ，触发 `ComputedRefImpl` value 的getter 函数执行，开始 **第一次** 副作用 收集，收集的对象是 <CodeVar>baseEffect</CodeVar>，存放于 `computedRef`的dep属性中。
-   - 之后 `this.effect.run()` 的执行 修改 `activeEffect` 为 <CodeVar>computedEffect</CodeVar>，内部导致 `greetGetter` 函数的执行，`greetGetter`函数触发`person.name`的 **第二次** 依赖收集，收集的对象是<CodeVar>computedEffect</CodeVar>，存放于 `targetMap[personTarget][name]`中
+   - 之后 `this.effect.run()` 的执行 修改 `activeEffect` 为 <CodeVar>computedEffect</CodeVar>，内部导致 `greetGetter` 函数的执行，`greetGetter`函数触发`person.name`的 **第二次** 依赖收集，收集的对象是<CodeVar>computedEffect</CodeVar>，存放于 `targetMap[personTarget]['name']`中
    - print 内部执行第二条 `greet.value` 语句，再次触发 `ComputedRefImpl` value 的getter 函数内部的依赖收集，此时 `activeEffect` 为 <CodeVar>computedEffect</CodeVar>，存放于 `computedRef`的dep属性中。
-   - 依赖收集结束，最终 `computedRef` 内保存 两个 副作用对象，分别是<CodeVar>baseEffect</CodeVar>、 <CodeVar>computedEffect</CodeVar>， `targetMap[personTarget][name]` 中收集 一个副作用对象 <CodeVar>computedEffect</CodeVar>
-4. 1s后，`resetProps` 函数执行，开发触发副作用对象的 执行
-   - `person.name` 的setter 触发 `targetMap[personTarget][name]` 内的副作用对象<CodeVar>computedEffect</CodeVar>的执行，对应 <CodeVar>computedEffect</CodeVar>内的调度器器开始执行。
+   - 依赖收集结束，最终 `computedRef` 内保存 两个 副作用对象，分别是<CodeVar>baseEffect</CodeVar>、 <CodeVar>computedEffect</CodeVar>， `targetMap[personTarget]['name']` 中收集 一个副作用对象 <CodeVar>computedEffect</CodeVar>
+4. 1s后，`resetProps` 函数执行，开发触发副作用对象的执行顺序
+   - `person.name` 的setter 触发 `targetMap[personTarget]['name']` 内的副作用对象<CodeVar>computedEffect</CodeVar>的执行，对应 <CodeVar>computedEffect</CodeVar>内的调度器器开始执行。
    - <CodeVar>computedEffect</CodeVar>的调度器开始触发 `computedRef` 内保存的两个副作用对象执行，这里要注意副作用对象的执行顺序，先执行计算属性的副作用对象<CodeVar>computedEffect</CodeVar>（第二次执行），在执行代理对象的副作用对象<CodeVar>baseEffect</CodeVar>，从而触发 `print` 函数的执行，并进一步触发 `greetGetter` 的重新执行
 
 ::: warning 副作用的执行顺序
@@ -278,7 +277,7 @@ computed的源码虽然简短，但是其执行流程相比reactive 的副作用
 
 ## watch 的实现
 
-watch 函数的响应性是基于`reactive`, `ref`, `computed`, `ReactiveEffect` 前面的 api 实现的，watch的职责 是调度，控制 第二个参数 `callback` 的执行时机.
+watch 函数的响应性是基于`reactive`, `ref`, `computed`, `ReactiveEffect` 前面的 api 实现的，watch的职责 是调度，核心是控制第二个参数 `callback` 的执行时机.
 
 要实现 watch，对比 `ReactiveEffect` 的调度器是用于自定义触发副作用的处理函数, runtime-core 包中 scheduler.ts 文件的功能，这里的调度用于异步执行回调函数，通过 `Promise.reslove().then(cb)` 将回调任务放到微队列中执行。
 
