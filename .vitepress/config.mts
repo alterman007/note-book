@@ -30,9 +30,7 @@ export default defineConfig({
       },
       {
         text: '后端',
-        items: [
-          // { text: 'nodejs', link: '/backend/nodejs/' },
-        ],
+        items: [{ text: 'python', link: '/backend/python/' }],
       },
       {
         text: '杂谈',
@@ -65,6 +63,12 @@ export default defineConfig({
         {
           text: '系统',
           items: [{ text: '协程', link: '/program/operator/corouine' }],
+        },
+      ],
+      '/backend/python': [
+        {
+          text: 'python',
+          items: [{ text: 'asyncio', link: '/backend/python/asyncio' }],
         },
       ],
     },
