@@ -41,4 +41,98 @@ VNode 就是一个普通的 javascript 对象，真实 DOM 节点的一种轻量
 
 ## 渲染过程
 
+渲染过程代码量巨大，本文主要记录源码中 render 过程的在处理 VNode 处理流程：
+render 函数所有对vnode对处理是都是`patch`函数，具体回根据 VNode 的不同分为以下几类：
+
+1. 静态渲染类型：
+   - Text：渲染文本节点
+   - Comment：渲染注释节点
+   - Static：处理静态类型，静态类型是模版编译过程为优化生产的简单VNode类型，其挂载和更新只需要处理dom创建移动操作，不需要考虑组件的生命周期、响应式处理等，
+2. Fragment：
+   - 处理 Fragment 类型，这个类型的存在，允许vue3 中组件返回多个根节点。内部主要处理通过 `patchChildren` 处理子元素
+3. ShapFlags.Element
+   - 处理普通的dom元素 例如 `<div />` `<input />` 等
+4. ShapeFlags.COMPONENT 处理函数组件和有状态组件的渲染
+   - 创建组件实例`instance`，并挂载到 vnode.componet 上，`instance`也会通过 vnode 指向 虚拟节点，两者互相引用
+   - 设置组件实例，会对 setup ，options API 处理，包括调用 beforeCreate Created 生命周期函数，设置其他生命周期函数钩子，使用 reactive 包裹data option返回等对象 等
+   - 创建 ReactiveEffect 实例，包裹 组件渲染/更新 函数 `componentUpdateFn`，实现组件等响应式更新
+   - `componentUpdateFn`内部会调用render 函数返回 subTree VNode，并递归 `patch`，处理生命周期钩子函数
+
+5. 其他组件 `Teleport` `KeepAlive` `BaseTransition`
+   - 这些组件的处理比较特殊，他们
+
+6. `Suspense` 暂未学习
+
 ## Diff 算法
+
+diff 算法渲染过程中最著名的算法，在源码中对应的 `patchKeyedChildren` 函数的实现，算法的整个过程包含5个步骤：
+
+1. 从前向后对比
+2. 从后向前对比
+3. 处理新增的情况
+4. 处理卸载的情况
+5. 乱序对比
+   - 5.1 遍历新节点，构建 `keyToNewIndexMap` ，记录 vnode.key 到新vnode 索引的映射
+   - 5.2 遍历旧节点，构建 `newIndexToOldIndexMap` ，记录 新节点在旧 数组中位置，并卸载旧节点，以及记录是否存在需要移动的vnode
+   - 5.3 使用 `newIndexToOldIndexMap` 计算 不需要最长递增子序列 `increasingNewIndexSequence`，移动的vnode， 遍历新节点，挂载 `newIndexToOldIndexMap` 中未记录的节点，移动不在 `newIndexToOldIndexMap` 中记录的节点
+
+在真实项目中，对数组的操作很多都是：
+
+1. 修改数组某一项或者某几项的数据
+2. 在数组队首或者队尾新增一条或多条数据
+3. 在数组队首或者队尾删除一条或多条数据
+
+diff算法的前四个简单步骤，已经可以很好的应上面对数组的常见操作。难点在于第5步 乱序对比 的处理：
+
+为了尽可能的减少dom操作，diff算法 通过计算出 最长公共子序列，确定不会变动的 vnode，然后以这些vnode为锚点，对其余的 vnode 进行挂载（增加）、卸载（删除）、移动操作。
+
+对 vnode 的最长的公共子序列的计算是通过计算新的 vnode 在老 vnode数组中的索引位置，转化为对索引数组求最长递增子序列（diff算法的核心算法）。在源码中对应 `getSequence` 函数。
+
+```js
+function getSequence(source) {
+  const record = Array.from(source).fill(0);
+  const result = [0];
+
+  for (let i = 0; i < source.length; i++) {
+    const arrI = source[i];
+    const lastIndex = result[result.length - 1];
+    if (source[lastIndex] < arrI) {
+      record[i] = lastIndex;
+      result.push(i);
+      continue;
+    }
+
+    let left = 0;
+    let right = result.length - 1;
+    while (left < right) {
+      const mid = (left + right) >> 1;
+      if (source[result[mid]] < arrI) {
+        left = mid + 1;
+      } else {
+        right = mid;
+      }
+    }
+    if (source[result[left]] > arrI) {
+      record[i] = result[left - 1];
+      result[left] = i;
+    }
+  }
+  let i = result.length;
+  let last = result[i - 1];
+  while (i-- > 0) {
+    result[i] = last;
+    last = record[last];
+  }
+  return result;
+}
+```
+
+这里对算法做几个必要的说明：
+
+1. 这里的算法返回的是 最长递增子序列的索引位置，而不是最长递增子序列本身；
+2. 这里的代码于vue 源码中略有不同，源码中对于数据 0 不做处理，对应于 vue 源码中 在计算 索引位置时做了[+ 1 处理](https://github.com/vuejs/core/blob/v3.2.37/packages/runtime-core/src/renderer.ts#L1939)，因此 0值 在vue diff 中没有意义。
+3. 对算法的理解有困难的话，可以从网上找视频进一步理解
+
+::: tip 为什么对索引 +1
+算法中 `newIndexToOldIndexMap` 数组被初始化为0，如果直接保存 新 vnode 在 旧vnode数组中的位置，这里的 0 会有歧义，一是新vnode 未在新数组中找到，二是新 vnode 在 旧vnode数组 的索引位置0上。对索引位置 + 1之后，可以保证 如果 `newIndexToOldIndexMap` 的某一项为0，说明 对应的 vnode 是新增节点。此外由于 getSequence 返回的是在 新vnode数组 不需要移动的 vnode 的索引位置，因此 这里实际上 +1， +2 无关紧要。
+:::
