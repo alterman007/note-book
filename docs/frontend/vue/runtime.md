@@ -47,7 +47,7 @@ render 函数所有对vnode对处理是都是`patch`函数，具体回根据 VNo
 1. 静态渲染类型：
    - Text：渲染文本节点
    - Comment：渲染注释节点
-   - Static：处理静态类型，静态类型是模版编译过程为优化生产的简单VNode类型，其挂载和更新只需要处理dom创建移动操作，不需要考虑组件的生命周期、响应式处理等，
+   - Static：处理静态类型（一般是模版编译优化时，存在大量的静态节点时由编译器使用），静态类型是模版编译过程为优化而创建的简单VNode类型，其挂载（通过 document.createElement('fragment')管理渲染内容）和更新只需要处理dom创建移动操作。由于直接通过 templateContainer.innerHTML 创建dom，因此手动使用createStaticVNode 创建时，需要注意字符串内容是否可信。
 2. Fragment：
    - 处理 Fragment 类型，这个类型的存在，允许vue3 中组件返回多个根节点。内部主要处理通过 `patchChildren` 处理子元素
 3. ShapFlags.Element
