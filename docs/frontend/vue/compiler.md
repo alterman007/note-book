@@ -8,30 +8,24 @@ sideNavTitle: '运行时'
 
 ```html
 <div>
-  <h2>hello {{ name }}</h2>
-  <span>static</span>
-  <p :class="color">i need some drinks</p>
+  <h1 class="greet">hello</h1>
+  <button @click="ev => a = ev.pageX">add {{ name }}</button>
 </div>
 ```
 
-最终会被编译为（开启hoistStatic）
+最终会被编译为（开启hoistStatic、cacheHandlers）
 
-```js
+```js:line-numbers {8}
 // prettier-ignore
-const _Vue = Vue
+import { createElementVNode as _createElementVNode, toDisplayString as _toDisplayString, openBlock as _openBlock, createElementBlock as _createElementBlock } from "vue"
 
-return function render(_ctx, _cache, $props, $setup, $data, $options) {
-  with (_ctx) {
-    const { toDisplayString: _toDisplayString, createElementVNode: _createElementVNode, normalizeClass: _normalizeClass, openBlock: _openBlock, createElementBlock: _createElementBlock } = _Vue
-
-    return (_openBlock(), _createElementBlock("div", null, [
-      _createElementVNode("h2", null, "hello " + _toDisplayString(name), 1 /* TEXT */),
-      _cache[0] || (_cache[0] = _createElementVNode("span", null, "static", -1 /* CACHED */)),
-      _createElementVNode("p", {
-        class: _normalizeClass(color)
-      }, "i need some drinks", 2 /* CLASS */)
-    ]))
-  }
+export function render(_ctx, _cache, $props, $setup, $data, $options) {
+  return (_openBlock(), _createElementBlock("div", null, [
+    _cache[1] || (_cache[1] = _createElementVNode("h1", { class: "greet" }, "hello", -1 /* CACHED */)),
+    _createElementVNode("button", {
+      onClick: _cache[0] || (_cache[0] = ev => _ctx.a = ev.pageX)
+    }, "add " + _toDisplayString(_ctx.name), 1 /* TEXT */)
+  ]))
 }
 ```
 
@@ -47,7 +41,7 @@ return function render(_ctx, _cache, $props, $setup, $data, $options) {
 
 4. `createStaticVNode` 在大量静态节点时使用，参考 Static 类型 VNode解释
 
-5. 函数缓存：缓存事件，避免每次创建虚拟节点时，都要创建新函数
+5. 函数缓存(第8行)：缓存事件，避免每次创建虚拟节点时，都要创建新函数
 
 ## 编译原理
 

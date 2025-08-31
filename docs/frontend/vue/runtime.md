@@ -136,3 +136,43 @@ function getSequence(source) {
 ::: tip 为什么对索引 +1
 算法中 `newIndexToOldIndexMap` 数组被初始化为0，如果直接保存 新 vnode 在 旧vnode数组中的位置，这里的 0 会有歧义，一是新vnode 未在新数组中找到，二是新 vnode 在 旧vnode数组 的索引位置0上。对索引位置 + 1之后，可以保证 如果 `newIndexToOldIndexMap` 的某一项为0，说明 对应的 vnode 是新增节点。此外由于 getSequence 返回的是在 新vnode数组 不需要移动的 vnode 的索引位置，因此 这里实际上 +1， +2 无关紧要。
 :::
+
+## provider, inject
+
+provider, inject 的实现比较简单，组件内部调用 provide 保存的 属性 被放在组件实例的 `provides` 属性对象上，该对象[通过原型链指向](https://github.com/vuejs/core/blob/v3.2.37/packages/runtime-core/src/apiInject.ts#L55)父组件实例的 provides。
+
+最总在inject 注入过程中，访问 provides[key]时， 可以利用 javascript 访问属性自动向原型链查找的特性最终获取到最近祖先节点注入的属性数据。
+
+## createApp
+
+这里主要介绍 createApp 返回的变量中 app 非常重要的一个属性 [`_context`](https://github.com/vuejs/core/blob/v3.2.37/packages/runtime-core/src/apiCreateApp.ts#L201)，
+
+context 本身是一个普通对象，但是源码中可以看到，通过 app.component、app.directive、app.mixin 方法调用注册的全局组件、指令、mixins 都可以属性的方式存储在context中，并以 `app._context` 对外暴露。
+
+如果我们在代码中通过 `resolve*`系列函数（例如 `resolveComponent`） 查找组件、指令、mixin时，内部会分别从 组件实例对象、组件本身、组件实例等appContext属性上查找，组件实例的appContext属性源自于父组件实例，并最终会为 app._context。
+
+因此在我们手动操作 VNode 时，如果需要全局注册的组件、指令等信息，可以通过 `vnode.appContext = app._context` 的方式实现
+::: tip 提示
+`resolveComponent` 函数通常在模版编译生成的代码中调用：
+```html
+<Header v-events.sync="hello" />
+```
+会被编译为
+```js
+import { resolveComponent as _resolveComponent, resolveDirective as _resolveDirective, withDirectives as _withDirectives, openBlock as _openBlock, createBlock as _createBlock } from "vue"
+
+export function render(_ctx, _cache, $props, $setup, $data, $options) {
+  const _component_Header = _resolveComponent("Header")
+  const _directive_events = _resolveDirective("events")
+
+  return _withDirectives((_openBlock(), _createBlock(_component_Header, null, null, 512 /* NEED_PATCH */)), [
+    [
+      _directive_events,
+      _ctx.hello,
+      void 0,
+      { sync: true }
+    ]
+  ])
+}
+```
+:::
