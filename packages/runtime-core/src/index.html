@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app" style="color: blue"></div>
+    <script type="module">
+      import {
+        createApp,
+        h,
+        shallowRef,
+        Teleport,
+      } from 'https://cdn.bootcdn.net/ajax/libs/vue/3.2.37/vue.esm-browser.js';
+      import { MyTeleport } from './Teleport.js';
+
+      const App = {
+        setup() {
+          const content = shallowRef('i am teleport content, parent is body');
+          const teleport = shallowRef(document.body);
+          setTimeout(() => {
+            content.value = 'i am new teleport content, parent is #app';
+            teleport.value = document.getElementById('app');
+          }, 1000);
+          return () =>
+            h(
+              'section',
+              {
+                style: { color: 'red' },
+              },
+              [
+                h('h1', 'Hello, World!'),
+                h(MyTeleport, { to: teleport.value }, [h('p', content.value)]),
+              ],
+            );
+        },
+      };
+      const app = createApp(App);
+      app.mount('#app');
+    </script>
+  </body>
+</html>
