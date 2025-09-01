@@ -27,6 +27,7 @@ VNode 就是一个普通的 javascript 对象，真实 DOM 节点的一种轻量
 - `key`：唯一标识，用于 Diff 优化。
 - `el`：渲染后对应的真实 DOM 元素。
 - `component`：如果是组件 VNode，会挂载组件实例。
+- `patchFlag`：优化标记，通常由 compiler 编译产生的render函数中使用，具体见 compiler 编译优化 章节
 
 ::: info 项目中操作VNode
 在实践过程中，在需要复杂的动态渲染，自定义渲染逻辑，难以避免直接操作（创建/修改 VNode）的场景，使用时务必要注意避免滥用：
@@ -149,15 +150,18 @@ provider, inject 的实现比较简单，组件内部调用 provide 保存的 �
 
 context 本身是一个普通对象，但是源码中可以看到，通过 app.component、app.directive、app.mixin 方法调用注册的全局组件、指令、mixins 都可以属性的方式存储在context中，并以 `app._context` 对外暴露。
 
-如果我们在代码中通过 `resolve*`系列函数（例如 `resolveComponent`） 查找组件、指令、mixin时，内部会分别从 组件实例对象、组件本身、组件实例等appContext属性上查找，组件实例的appContext属性源自于父组件实例，并最终会为 app._context。
+如果我们在代码中通过 `resolve*`系列函数（例如 `resolveComponent`） 查找组件、指令、mixin时，内部会分别从 组件实例对象、组件本身、组件实例等appContext属性上查找，组件实例的appContext属性源自于父组件实例，并最终会为 `app._context`。
 
 因此在我们手动操作 VNode 时，如果需要全局注册的组件、指令等信息，可以通过 `vnode.appContext = app._context` 的方式实现
 ::: tip 提示
 `resolveComponent` 函数通常在模版编译生成的代码中调用：
+
 ```html
 <Header v-events.sync="hello" />
 ```
+
 会被编译为
+
 ```js
 import { resolveComponent as _resolveComponent, resolveDirective as _resolveDirective, withDirectives as _withDirectives, openBlock as _openBlock, createBlock as _createBlock } from "vue"
 
@@ -175,4 +179,3 @@ export function render(_ctx, _cache, $props, $setup, $data, $options) {
   ])
 }
 ```
-:::
