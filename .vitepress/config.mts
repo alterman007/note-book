@@ -14,7 +14,7 @@ export default defineConfig({
   srcDir: 'docs',
   outDir: 'dist',
   head: [['link', { rel: 'icon', href: '/notebook.png' }]],
-  title: '编程笔记-title',
+  title: '大杂烩',
   description: '编程笔记-description',
   themeConfig: {
     logo: '/notebook.png',
@@ -35,6 +35,14 @@ export default defineConfig({
       {
         text: '杂谈',
         items: [{ text: '系统', link: '/program/operator/' }],
+      },
+      {
+        text: 'ai',
+        items: [
+          { text: 'llm', link: '/ai/llm/' },
+          { text: 'ollama', link: '/ai/ollama/' },
+          { text: 'rag', link: '/ai/rag' },
+        ],
       },
     ],
 
@@ -57,6 +65,27 @@ export default defineConfig({
             { text: 'Typescript', link: '/frontend/typescript/' },
             { text: 'variance', link: '/frontend/typescript/variance' },
           ],
+        },
+      ],
+      '/ai/ollama/': [
+        {
+          text: 'ollama',
+          items: [{ text: 'ollama', link: '/ai/ollama/' }],
+        },
+      ],
+      '/ai/llm': [
+        {
+          text: 'llm',
+          items: [
+            { text: '环境安装', link: '/ai/llm/envirment' },
+            { text: '模型调用', link: '/ai/llm/model_call' },
+          ],
+        },
+      ],
+      '/ai/rag': [
+        {
+          text: 'rag',
+          items: [{ text: 'rag', link: '/ai/rag/' }],
         },
       ],
       '/program/operator': [
